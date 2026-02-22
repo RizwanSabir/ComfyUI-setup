@@ -1,30 +1,38 @@
 #!/bin/bash
 
-# 1) Clone your custom ComfyUI setup
-echo "Cloning your ComfyUI setup..."
-git clone https://github.com/RizwanSabir/ComfyUI-setup.git
-if [ $? -ne 0 ]; then
-  echo "Failed to clone ComfyUI-setup!"
-  exit 1
+set -e  # Stop script if any command fails
+
+echo "===== Starting Setup ====="
+
+# 1️⃣ Clone your custom setup repo
+if [ ! -d "ComfyUI-setup" ]; then
+  echo "Cloning ComfyUI-setup..."
+  git clone https://github.com/RizwanSabir/ComfyUI-setup.git
+else
+  echo "ComfyUI-setup already exists. Skipping..."
 fi
 
-# 2) Clone the official ComfyUI repo
-echo "Cloning official ComfyUI..."
-git clone https://github.com/Comfy-Org/ComfyUI.git
-if [ $? -ne 0 ]; then
-  echo "Failed to clone ComfyUI!"
-  exit 1
+# 2️⃣ Clone official ComfyUI repo
+if [ ! -d "ComfyUI" ]; then
+  echo "Cloning official ComfyUI..."
+  git clone https://github.com/Comfy-Org/ComfyUI.git
+else
+  echo "ComfyUI already exists. Skipping..."
 fi
 
-# 3) Navigate into ComfyUI
-cd ComfyUI || { echo "Failed to cd into ComfyUI"; exit 1; }
+# 3️⃣ Move into ComfyUI directory
+cd ComfyUI
 
-# 4) Install required Python packages
-echo "Installing requirements..."
+# 4️⃣ Install Python requirements
+echo "Installing Python dependencies..."
 pip install -r requirements.txt
-if [ $? -ne 0 ]; then
-  echo "Failed to install requirements!"
-  exit 1
-fi
 
-echo "Setup complete! 🎉"
+# 5️⃣ Install code-server
+echo "Installing code-server..."
+curl -fsSL https://code-server.dev/install.sh | sh
+
+# 6️⃣ Start code-server
+echo "Starting code-server..."
+code-server
+
+echo "===== Setup Complete ====="

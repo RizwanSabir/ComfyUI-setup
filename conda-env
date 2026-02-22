@@ -8,8 +8,18 @@ echo "===== Starting Setup ====="
 # Variables
 #############################################
 
-CONDA_DIR="$PWD/miniconda"
+CONDA_DIR="$HOME/workspace/ComfyUI-setup/miniconda"
 ENV_NAME="comfyui_env"
+
+#############################################
+# Add Conda to PATH (IMPORTANT)
+#############################################
+
+export PATH="$CONDA_DIR/bin:$PATH"
+
+if [ -f "$CONDA_DIR/etc/profile.d/conda.sh" ]; then
+    source "$CONDA_DIR/etc/profile.d/conda.sh"
+fi
 
 #############################################
 # Install Miniconda if Missing
@@ -28,26 +38,12 @@ else
 fi
 
 #############################################
-# Load Conda
-#############################################
-
-export PATH="$CONDA_DIR/bin:$PATH"
-
-if [ -f "$CONDA_DIR/etc/profile.d/conda.sh" ]; then
-    source "$CONDA_DIR/etc/profile.d/conda.sh"
-else
-    echo "Conda initialization file missing"
-    exit 1
-fi
-
-#############################################
-# Accept Conda TOS Automatically
+# Accept Conda TOS
 #############################################
 
 echo "Accepting Conda Terms of Service..."
 
 $CONDA_DIR/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true
-
 $CONDA_DIR/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true
 
 #############################################
@@ -55,7 +51,7 @@ $CONDA_DIR/bin/conda tos accept --override-channels --channel https://repo.anaco
 #############################################
 
 if ! command -v conda >/dev/null 2>&1; then
-    echo "Conda setup failed"
+    echo "Conda not working"
     exit 1
 fi
 
@@ -68,7 +64,7 @@ echo "Conda working ✔"
 if conda env list | grep -q "$ENV_NAME"; then
     echo "Environment exists → Activating"
 else
-    echo "Creating environment with Python 3.12"
+    echo "Creating environment..."
     conda create -n $ENV_NAME python=3.12 -y
 fi
 
@@ -88,8 +84,6 @@ cd ComfyUI
 #############################################
 # Install Dependencies
 #############################################
-
-echo "Installing Python dependencies..."
 
 pip install --upgrade pip
 pip install -r requirements.txt

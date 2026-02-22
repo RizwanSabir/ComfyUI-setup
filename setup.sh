@@ -1,37 +1,53 @@
 #!/bin/bash
 
-set -e  # Stop script if any command fails
+set -e
 
 echo "===== Starting Setup ====="
 
-# 1️⃣ Clone your custom setup repo
+# Clone ComfyUI setup repo
 if [ ! -d "ComfyUI-setup" ]; then
   echo "Cloning ComfyUI-setup..."
   git clone https://github.com/RizwanSabir/ComfyUI-setup.git
 else
-  echo "ComfyUI-setup already exists. Skipping..."
+  echo "ComfyUI-setup already exists."
 fi
 
-# 2️⃣ Clone official ComfyUI repo
+# Clone official ComfyUI repo
 if [ ! -d "ComfyUI" ]; then
-  echo "Cloning official ComfyUI..."
+  echo "Cloning ComfyUI..."
   git clone https://github.com/Comfy-Org/ComfyUI.git
 else
-  echo "ComfyUI already exists. Skipping..."
+  echo "ComfyUI already exists."
 fi
 
-# 3️⃣ Move into ComfyUI directory
+# Move into ComfyUI directory
 cd ComfyUI
 
-# 4️⃣ Install Python requirements
+# Create virtual environment if not exists
+if [ ! -d "venv" ]; then
+  echo "Creating virtual environment..."
+  python3 -m venv venv
+else
+  echo "Virtual environment already exists."
+fi
+
+# Activate virtual environment
+echo "Activating virtual environment..."
+source venv/bin/activate
+
+# Upgrade pip
+echo "Upgrading pip..."
+pip install --upgrade pip
+
+# Install dependencies
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
 
-# 5️⃣ Install code-server
+# Install code-server
 echo "Installing code-server..."
 curl -fsSL https://code-server.dev/install.sh | sh
 
-# 6️⃣ Start code-server
+# Start code-server
 echo "Starting code-server..."
 code-server
 

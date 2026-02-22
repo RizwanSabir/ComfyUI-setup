@@ -5,105 +5,93 @@ set -e
 echo "===== Starting Setup ====="
 
 #############################################
-# Set Variables
+# Variables
 #############################################
 
 CONDA_DIR="$PWD/miniconda"
 ENV_NAME="comfyui_env"
 
 #############################################
-# Install / Detect Conda
+# Install Miniconda if Missing
 #############################################
 
-if command -v conda >/dev/null 2>&1; then
-    echo "Conda is already installed ✔"
+if [ ! -d "$CONDA_DIR/bin" ]; then
+    echo "Installing Miniconda..."
+
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+
+    bash miniconda.sh -b -p "$CONDA_DIR"
+
+    rm miniconda.sh
 else
-    echo "Conda not found. Installing Miniconda locally..."
-
-    if [ ! -d "$CONDA_DIR" ]; then
-        echo "Installing Miniconda to $CONDA_DIR"
-
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-
-        bash miniconda.sh -b -p "$CONDA_DIR"
-
-        rm miniconda.sh
-    else
-        echo "Miniconda directory already exists. Skipping download."
-    fi
-
-    export PATH="$CONDA_DIR/bin:$PATH"
-
-    if [ -f "$CONDA_DIR/etc/profile.d/conda.sh" ]; then
-        source "$CONDA_DIR/etc/profile.d/conda.sh"
-    fi
+    echo "Miniconda already installed ✔"
 fi
 
 #############################################
-# Load system bashrc
+# Load Conda
 #############################################
 
-if [ -f "$HOME/.bashrc" ]; then
-    source "$HOME/.bashrc" || true
-fi
+export PATH="$CONDA_DIR/bin:$PATH"
 
-if ! command -v conda >/dev/null 2>&1; then
-    echo "Conda installation failed"
+if [ -f "$CONDA_DIR/etc/profile.d/conda.sh" ]; then
+    source "$CONDA_DIR/etc/profile.d/conda.sh"
+else
+    echo "Conda initialization file missing"
     exit 1
 fi
 
 #############################################
-# Create / Activate Environment
+# Accept Conda TOS Automatically
+#############################################
+
+echo "Accepting Conda Terms of Service..."
+
+$CONDA_DIR/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true
+
+$CONDA_DIR/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true
+
+#############################################
+# Verify Conda
+#############################################
+
+if ! command -v conda >/dev/null 2>&1; then
+    echo "Conda setup failed"
+    exit 1
+fi
+
+echo "Conda working ✔"
+
+#############################################
+# Create Environment
 #############################################
 
 if conda env list | grep -q "$ENV_NAME"; then
-    echo "Environment $ENV_NAME already exists ✔"
+    echo "Environment exists → Activating"
 else
-    echo "Creating Conda environment with Python 3.12..."
+    echo "Creating environment with Python 3.12"
     conda create -n $ENV_NAME python=3.12 -y
 fi
 
 echo "Activating environment..."
-source activate $ENV_NAME 2>/dev/null || conda activate $ENV_NAME
+source activate $ENV_NAME || conda activate $ENV_NAME
 
 #############################################
-# Install Git if missing
+# Clone ComfyUI
 #############################################
-
-if ! command -v git >/dev/null 2>&1; then
-    echo "Git not found. Installing git..."
-    sudo apt update
-    sudo apt install git -y
-fi
-
-#############################################
-# Clone Repositories
-#############################################
-
-if [ ! -d "ComfyUI-setup" ]; then
-    echo "Cloning ComfyUI-setup..."
-    git clone https://github.com/RizwanSabir/ComfyUI-setup.git
-else
-    echo "ComfyUI-setup already exists."
-fi
 
 if [ ! -d "ComfyUI" ]; then
-    echo "Cloning ComfyUI..."
     git clone https://github.com/Comfy-Org/ComfyUI.git
-else
-    echo "ComfyUI already exists."
 fi
+
+cd ComfyUI
 
 #############################################
 # Install Dependencies
 #############################################
 
-cd ComfyUI
+echo "Installing Python dependencies..."
 
-echo "Upgrading pip..."
 pip install --upgrade pip
-
-echo "Installing requirements..."
 pip install -r requirements.txt
 
 echo "===== Setup Complete 🚀 ====="

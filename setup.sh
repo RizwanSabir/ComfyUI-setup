@@ -43,12 +43,6 @@ pip install --upgrade pip
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
 
-# Install code-server
-echo "Installing code-server..."
-curl -fsSL https://code-server.dev/install.sh | sh
 
-# Start code-server
-echo "Starting code-server..."
-code-server
 
 echo "===== Setup Complete ====="

@@ -5,64 +5,76 @@ set -e
 echo "===== Starting Setup ====="
 
 #############################################
-# Check Conda Installation
+# Set Variables
+#############################################
+
+CONDA_DIR="$PWD/miniconda"
+ENV_NAME="comfyui_env"
+
+#############################################
+# Install / Detect Conda
 #############################################
 
 if command -v conda >/dev/null 2>&1; then
-    echo "Conda is already installed"
+    echo "Conda is already installed ✔"
 else
     echo "Conda not found. Installing Miniconda locally..."
 
-    CONDA_DIR="$PWD/miniconda"
-
     if [ ! -d "$CONDA_DIR" ]; then
-        mkdir -p "$CONDA_DIR"
+        echo "Installing Miniconda to $CONDA_DIR"
 
-        # Download Miniconda
         wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 
         bash miniconda.sh -b -p "$CONDA_DIR"
 
         rm miniconda.sh
+    else
+        echo "Miniconda directory already exists. Skipping download."
     fi
 
-    # Initialize conda in current shell
     export PATH="$CONDA_DIR/bin:$PATH"
-    source "$CONDA_DIR/etc/profile.d/conda.sh" || true
 
-    echo "Conda installed locally"
+    if [ -f "$CONDA_DIR/etc/profile.d/conda.sh" ]; then
+        source "$CONDA_DIR/etc/profile.d/conda.sh"
+    fi
 fi
 
 #############################################
-# Load conda into shell if exists globally
+# Load system bashrc
 #############################################
 
 if [ -f "$HOME/.bashrc" ]; then
     source "$HOME/.bashrc" || true
 fi
 
-if command -v conda >/dev/null 2>&1; then
-    echo "Conda available ✔"
-else
-    echo "Conda not available even after installation"
+if ! command -v conda >/dev/null 2>&1; then
+    echo "Conda installation failed"
     exit 1
 fi
 
 #############################################
-# Create or Use Conda Environment
+# Create / Activate Environment
 #############################################
 
-ENV_NAME="comfyui_env"
-
 if conda env list | grep -q "$ENV_NAME"; then
-    echo "Conda environment already exists → Activating"
+    echo "Environment $ENV_NAME already exists ✔"
 else
-    echo "Creating conda environment with Python 3.12"
+    echo "Creating Conda environment with Python 3.12..."
     conda create -n $ENV_NAME python=3.12 -y
 fi
 
 echo "Activating environment..."
-conda activate $ENV_NAME || source activate $ENV_NAME
+source activate $ENV_NAME 2>/dev/null || conda activate $ENV_NAME
+
+#############################################
+# Install Git if missing
+#############################################
+
+if ! command -v git >/dev/null 2>&1; then
+    echo "Git not found. Installing git..."
+    sudo apt update
+    sudo apt install git -y
+fi
 
 #############################################
 # Clone Repositories
@@ -88,8 +100,10 @@ fi
 
 cd ComfyUI
 
-echo "Installing Python dependencies..."
+echo "Upgrading pip..."
 pip install --upgrade pip
+
+echo "Installing requirements..."
 pip install -r requirements.txt
 
-echo "===== Setup Complete ====="
+echo "===== Setup Complete 🚀 ====="
